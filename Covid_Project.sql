@@ -59,7 +59,7 @@ order by Total_Deaths desc
 
 
 -- after figuring that there is something wrong with the data
--- I'm explring the continent column
+-- I'm exploring the continent column
 SELECT continent,location, date, new_cases,  total_cases,total_deaths
 FROM SQLProjects..CovidDeaths
 where continent is null 
