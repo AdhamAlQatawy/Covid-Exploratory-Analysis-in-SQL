@@ -5,47 +5,22 @@ order by location, date
 
 
 -- exploring Cases and deaths Percentage 
-CREATE OR ALTER VIEW CasesAndDeathsPercentages as 
-SELECT continent, location, date, population, total_cases, (total_cases/population)*100 as CasesPercentage, total_deaths, (total_deaths/total_cases)*100 as DeathPercentage
+CREATE OR ALTER VIEW CasesAndDeaths as 
+SELECT continent, location, date, population , new_cases, new_deaths, total_cases, (total_cases/population)*100 as CasesPercentage, total_deaths, (total_deaths/total_cases)*100 as DeathPercentage
 FROM SQLProjects..CovidDeaths
 where continent is not null and total_cases <> 0
 --order by location, date
 
 
---explroing the countries with the highest infections 
-CREATE or alter VIEW HighestInfectionsCountries as 
-SELECT continent, location, population, max(total_cases) as Total_Infection
+-- Investigatin the countries percentage of infection and deaths
+CREATE or alter VIEW InfectionsAndDeathsPercentages as 
+SELECT continent, location, population, max(total_cases) as Total_Infection, (max(total_cases)/population)*100 as Infection_Percentages, 
+max(cast(total_deaths as int)) as Total_Deaths, (max(cast(total_deaths as int))/max(total_cases))*100 as Death_Percentages
 FROM SQLProjects..CovidDeaths
-where continent is not null 
+where continent is not null and total_cases <> 0
 group by continent, location, population
---order by Total_Infection desc
+--order by Location 
 
-
--- Investigatin the countries with the highest percentage of infection
-CREATE or alter VIEW HighestInfectionsPercentages as 
-SELECT continent, location, population, max(total_cases) as Total_Infection, max((total_cases/population))*100 as Infection_Percentage
-FROM SQLProjects..CovidDeaths
-where continent is not null 
-group by continent, location, population
---order by Infection_Percentage desc
-
-
--- Invistigating the countries with the highest number of deaths
-CREATE or alter VIEW HighestDeathsCountries as
-SELECT continent,location, population, max(cast(total_deaths as int)) as Total_Deaths
-FROM SQLProjects..CovidDeaths
-where continent is not null 
-group by continent,location, population 
---order by Total_Deaths desc
-
-
--- Invistigating the countries with the highest percentage of deaths
-CREATE or ALTER VIEW HighestDeathsPercentages as
-SELECT continent, location, population, max(cast(total_deaths as int)) as Total_Deaths, max((cast(total_deaths as int))/population)*100 as Death_Percentage
-FROM SQLProjects..CovidDeaths
-where continent is not null 
-group by continent, location, population 
---order by Death_Percentage desc
 
 
 
@@ -133,16 +108,16 @@ where continent is not null
 
 -- Getting the vaccinated people's percentage
 CREATE OR ALTER VIEW TotalVaccinatedPercentages as
-with VacPercentage (continent, location, date, population, new_vaccinations, People_Vaccinated_Percentage) 
+with VacPercentage (continent, location, date, population, new_vaccinations, People_Vaccinated) 
 as(
 select cd.continent, cd.location, cd.date, cd.population, cv.new_vaccinations
-, sum(cast(cv.new_vaccinations as int)) over (partition by cd.location order by cd.date) as People_Vaccinated_Percentage
+, sum(cast(cv.new_vaccinations as int)) over (partition by cd.location order by cd.date) as People_Vaccinated
 from SQLProjects..CovidDeaths as cd
 inner join SQLProjects..CovidVaccinations cv
 on cd.location = cv.location and cd.date = cv.date
 where cd.continent is not null
 ) 
-select *, (People_Vaccinated_Percentage/population)*100 as PeopleVaccinatedPercentage
+select *, (People_Vaccinated/population)*100 as PeopleVaccinatedPercentage
 from VacPercentage
 
 --Replacing all NULL values with 0 to use it in Visualization
@@ -153,5 +128,13 @@ WHERE new_vaccinations IS NULL;
 UPDATE SQLProjects..CovidDeaths
 SET total_cases=0
 WHERE total_cases IS NULL; 
+
+UPDATE SQLProjects..CovidDeaths
+SET new_cases=0
+WHERE new_cases IS NULL; 
+
+UPDATE SQLProjects..CovidDeaths
+SET new_deaths=0
+WHERE new_deaths IS NULL; 
 
 
