@@ -159,7 +159,7 @@ WHERE location = 'World';
 
 --Cases and deaths 
 CREATE OR ALTER VIEW CasesAndDeaths as 
-SELECT continent, location, date, population , new_cases, new_deaths, total_cases, total_deaths
+SELECT continent, location as country, date, population , new_cases, new_deaths, total_cases, total_deaths
 FROM SQLProjects..CovidDeaths
 where continent is not null and total_cases <> 0 
 
@@ -179,7 +179,7 @@ with new_CovidCases (continent, total_cases) as
 (
 SELECT continent, sum(total_cases) as total_cases
 FROM SQLProjects..CovidDeaths
-where continent is not null 
+where continent is not null and continent <> 'World'
 group by continent, date
 )
 select continent, max(total_cases) as total_cases
@@ -193,7 +193,7 @@ with new_CovidDeaths (continent, total_deaths) as
 (
 SELECT continent, sum(cast(new_deaths as int)) as total_deaths
 FROM SQLProjects..CovidDeaths
-where continent is not null 
+where continent is not null and continent <> 'World'
 group by continent
 )
 select continent, max(total_deaths) as total_deaths
@@ -210,7 +210,7 @@ where continent is not null and continent = 'WorldWide'
 
 
 --Vaccination Statistics 
-CREATE OR ALTER VIEW TotalFullyVaccinated as
+CREATE OR ALTER VIEW TotalVaccinated as
 with VacPercentage (continent, location, population, People_Vaccinated) 
 as(
 select cd.continent, cd.location, cd.population
@@ -221,7 +221,9 @@ on cd.location = cv.location and cd.date = cv.date
 where cd.continent is not null
 group by cd.continent, cd.location, cd.population
 ) 
-select continent, location, population, sum(people_Vaccinated) as PeopleVaccinated, (sum(People_Vaccinated)/sum(population))*100 as PeopleFullyVaccinatedPercentages
+select location, sum(population) as population, sum(people_Vaccinated) as PeopleVaccinated, (sum(People_Vaccinated)/sum(population))*100 as PeopleVaccinatedPercentages
 from VacPercentage
-where population is not null
-group by continent, location, population
+where population is not null 
+group by location
+having (sum(People_Vaccinated)/sum(population))*100 < 100
+ 
